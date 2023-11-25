@@ -1,0 +1,207 @@
+(define (domain prisoner_dilemma)
+    (:agents mick, zack, sam, p)
+
+    (:types loc)
+    (:constants)
+    (:predicates
+        {AK}(at ?agent - agent ?l - loc)
+        (testify ?agent - agent)
+        {AK}(connected ?l1 ?l2 - loc)
+        (trust ?a1 ?a2 - agent) ; agent 1 trust agent 2
+        (police ?a - agent)
+        (jail_1_year ?a - agent)
+        (jail_2_year ?a - agent)
+        (jail_3_year ?a - agent)
+        (free ?a - agent)
+        (diff ?a1 ?a2 - agent)
+    )
+
+    (:action policeMove
+        :derive-condition   always
+        :parameters         (?a - agent ?l1 ?l2 - loc)
+        :precondition (and 
+            (at ?a ?l1)
+            (police ?a)
+            (connected ?l1 ?l2)
+        )
+        :effect (and 
+            (!at ?a ?l1)
+            (at ?a ?l2)
+        )
+    )
+
+    (:action speak
+        :derive-condition never
+        :parameters (?police ?a - agent ?l - loc)
+        :precondition (and (at ?police ?l) (police ?police) (!at ?a ?l))
+        :effect (and
+            (forall (?agent - agent)
+                (
+                    (when 
+                        (and (at ?agent ?l) (trust ?agent ?a))
+                        [?agent](!testify ?a)
+                    )
+                    (when 
+                        (and (at ?agent ?l) (!trust ?agent ?a))
+                        [?agent](testify ?a)
+                    )
+                )
+            )
+        )
+    )
+
+    (:action argue
+        :derive-condition never
+        :parameters (?a1 ?a2 ?a - agent ?l - location)
+        :precondition (and 
+            (at ?a1 ?l)
+            (at ?a2 ?l)
+            [?a1](!testify ?a)
+            [?a2](testify ?a)
+        )
+        :effect (and 
+            <?a1>(testify ?a)
+            <?a1>(!testify ?a)
+            <?a2>(testify ?a)
+            <?a2>(!testify ?a)
+        )
+    )
+    
+    (:action decisionMake
+        :derive-condition never
+        :parameters (?a1 ?a2 - agent)
+        :precondition (and 
+            (or [?a1](testify ?a1) 
+                [?a1](!testify ?a1)
+                <?a1>(testify ?a1) 
+                <?a1>(!testify ?a1)
+            )
+        )
+        :effect (and 
+            (when 
+                [?a1](testify ?a2)
+                (testify ?a1)
+            )
+            (when 
+                (and <?a1>(testify ?a2) <?a1>(!testify ?a2)) 
+                (!testify ?a1)
+            )
+        )
+    )
+    
+    (:action goToCourt
+        :derive-condition always
+        :parameters (?a1 ?a2 ?a3 - agent)
+        :precondition (and
+            (diff ?a1 ?a2)
+            (diff ?a2 ?a3)
+            (diff ?a1 ?a3)
+
+            (!police ?a1)
+            (!police ?a2)
+            (!police ?a3)
+
+            (or (testify ?a1) (!testify ?a1))
+            (or (testify ?a2) (!testify ?a2))
+            (or (testify ?a3) (!testify ?a3))
+        )
+        :effect (and 
+            (when
+                (and
+                    (testify ?a1)
+                    (!testify ?a2)
+                    (!testify ?a3)
+                )
+                (
+                    (free ?a1)
+                    (jail_3_year ?a2)
+                    (jail_3_year ?a3)
+                )
+            )
+            (when
+                (and
+                    (testify ?a1)
+                    (testify ?a2)
+                    (testify ?a3)
+                )
+                (
+                    (jail_2_year ?a1)
+                    (jail_2_year ?a2)
+                    (jail_2_year ?a3)
+                )
+            )
+            (when
+                (and
+                    (!testify ?a1)
+                    (testify ?a2)
+                    (testify ?a3)
+                )
+                (
+                    (jail_2_year ?a1)
+                    (jail_2_year ?a2)
+                    (jail_2_year ?a3)
+                )
+            )
+            (when
+                (and
+                    (!testify ?a1)
+                    (!testify ?a2)
+                    (!testify ?a3)
+                )
+                (
+                    (jail_1_year ?a1)
+                    (jail_1_year ?a2)
+                    (jail_1_year ?a3)
+                )
+            )
+        )
+    )
+    
+
+)
+
+(define (problem 3_prisoners)
+    (:domain prisoner_dilemma)
+    (:objects l0 l1 - loc)
+
+
+    (:init-type complete)
+    (:init
+
+        (connected l1 l0)
+        (connected l0 l1)
+
+        (diff mick zack)
+        (diff zack mick)
+        (diff mick sam)
+        (diff sam mick)
+        (diff zack sam)
+        (diff sam zack)
+
+        (at zack l1)
+        (at mick l1)
+        (at sam l0)
+        (at p l0)
+        (police p)
+
+        ; trust between prisoners
+        ; (trust zack mick)
+        (trust zack sam)
+
+    )
+    (:depth 1)
+
+    ; Goal:
+    ;   - Sam testifies
+    ;   - Zack and Mick both believe he did not testify
+
+    (:goal
+        (free sam)
+        (jail_3_year mick)
+        (jail_3_year zack)
+    )
+
+    
+
+)
+
