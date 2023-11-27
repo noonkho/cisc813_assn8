@@ -1,0 +1,7 @@
+(KILL_A_D_L0 )
+(MOVE_B_L0_L1 )
+(MOVE_A_L0_L1 )
+(KILL_A_B_L1 )
+(FINISH_TASK_A_L1 )
+(MOVE_A_L1_L0 )
+(KILL_A_C_L0 )

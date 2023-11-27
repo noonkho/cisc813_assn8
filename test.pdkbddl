@@ -1,0 +1,119 @@
+(define (domain amongus)
+
+    (:agents a b c d)
+
+    (:types loc)
+    (:constants )
+
+    (:predicates
+        (imposter ?a - agent)
+        (task ?a - agent ?l - loc)
+        {AK}(at ?a - agent ?l - loc) 
+        {AK}(connected ?l1 ?l2 - loc)
+        (dead ?a - agent)
+        (finished ?a - agent)
+        (maybe_imposter ?a - agent)
+        (diff ?a1 ?a2 - agent)
+    )
+
+    (:action move
+        :derive-condition   always
+        :parameters         (?a - agent ?l1 ?l2 - loc)
+        :precondition       (and (at ?a ?l1) (connected ?l1 ?l2) (!dead ?a))
+        :effect             (and (at ?a ?l2) (!at ?a ?l1))
+    )
+
+    (:action finish_task
+        :derive-condition  (at $agent$ ?l)
+        :parameters (?a - agent ?l - loc)
+        :precondition (and (at ?a ?l) (task ?a ?l) (!finished ?a) (!dead ?a))
+        :effect (and
+            (!maybe_imposter ?a)
+            (finished ?a)
+        )
+    )
+
+    (:action kill
+        :derive-condition (at $agent$ ?l)
+        :parameters (?a ?b - agent ?l - loc)
+        :precondition (and 
+            (imposter ?a)
+            (at ?a ?l)
+            (at ?b ?l)
+            (!dead ?b)
+            (diff ?a ?b)
+        )
+        :effect (and 
+            (dead ?b)
+            (maybe_imposter ?a)
+        )
+    )
+
+)
+
+(define (problem sus)
+
+    (:domain amongus)
+
+    (:objects l0 l1 l2 l3 - loc)
+
+    (:projection )
+    (:task valid_generation)
+
+    (:init-type complete)
+    (:init
+
+        ; Just a pair of rooms
+        (connected l1 l0)
+        (connected l0 l1)
+        (connected l0 l2)
+        (connected l2 l0)
+        (connected l0 l3)
+        (connected l3 l0)
+
+        (diff a b) (diff b a)
+        (diff a c) (diff c a)
+        (diff a d) (diff d a)
+        (diff b c) (diff c b)
+        (diff b d) (diff d b)
+        (diff c d) (diff d c)
+  
+        (at a l0)
+        (at b l0)
+        (at c l0)
+        (at d l0)
+        
+        (imposter a)
+
+        (task a l1)
+        (task b l1)
+        (task c l2)
+        (task d l3)
+
+        (!finished a)
+        (!finished b)
+        (!finished c)
+        (!finished d)
+
+        (!dead a)
+        (!dead b)
+        (!dead c)
+        (!dead d)
+    )
+
+    (:depth 1)
+
+    ; Goal:
+
+    (:goal
+        [b](!maybe_imposter a)
+        [c](maybe_imposter a)
+        (dead c)
+        (dead d)
+        (dead b)
+
+        
+        
+       
+    )
+)

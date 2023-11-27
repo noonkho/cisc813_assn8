@@ -1,24 +1,30 @@
 (define (domain prisoner_dilemma)
-    (:agents mick, zack, sam, p)
+
+    (:agents mick zack sam p)
 
     (:types loc)
-    (:constants)
+    (:constants )
+    
     (:predicates
-        {AK}(at ?agent - agent ?l - loc)
-        (testify ?agent - agent)
+        {AK}(at ?a - agent ?l - loc)
+            (testify ?a - agent)
+
         {AK}(connected ?l1 ?l2 - loc)
-        (trust ?a1 ?a2 - agent) ; agent 1 trust agent 2
-        (police ?a - agent)
-        (jail_1_year ?a - agent)
-        (jail_2_year ?a - agent)
-        (jail_3_year ?a - agent)
-        (free ?a - agent)
-        (diff ?a1 ?a2 - agent)
+
+            (trust ?a1 ?a2 - agent) ; agent 1 trust agent 2
+            (police ?a - agent)
+
+            (jail_1_year ?a - agent)
+            (jail_2_year ?a - agent)
+            (jail_3_year ?a - agent)
+            (free ?a - agent)
+
+        {AK}(diff ?a1 ?a2 - agent)
     )
 
     (:action policeMove
         :derive-condition   always
-        :parameters         (?a - agent ?l1 ?l2 - loc)
+        :parameters (?a - agent ?l1 ?l2 - loc)
         :precondition (and 
             (at ?a ?l1)
             (police ?a)
@@ -32,8 +38,8 @@
 
     (:action speak
         :derive-condition never
-        :parameters (?police ?a - agent ?l - loc)
-        :precondition (and (at ?police ?l) (police ?police) (!at ?a ?l))
+        :parameters (?p ?a - agent ?l - loc)
+        :precondition (and (at ?p ?l) (police ?p) (!at ?a ?l))
         :effect (and
             (forall (?agent - agent)
                 (
@@ -60,22 +66,26 @@
             [?a2](testify ?a)
         )
         :effect (and 
-            <?a1>(testify ?a)
-            <?a1>(!testify ?a)
-            <?a2>(testify ?a)
-            <?a2>(!testify ?a)
+            ; <?a1>(testify ?a)
+            ; <?a1>(!testify ?a)
+            ; <?a2>(testify ?a)
+            ; <?a2>(!testify ?a)
+            <?a1>(or (testify ?a) (!testify ?a))
+            <?a2>(or (testify ?a) (!testify ?a))
         )
     )
     
     (:action decisionMake
         :derive-condition never
         :parameters (?a1 ?a2 - agent)
-        :precondition (and 
-            (or [?a1](testify ?a1) 
-                [?a1](!testify ?a1)
-                <?a1>(testify ?a1) 
-                <?a1>(!testify ?a1)
-            )
+        :precondition ( 
+            ; or [?a1](testify ?a1) 
+            ;     [?a1](!testify ?a1)
+            ;     <?a1>(testify ?a1) 
+            ;     <?a1>(!testify ?a1)
+            or
+            ([?a1](or (testify ?a1) (testify ?a1)))
+            (<?a1>(or (testify ?a1) (testify ?a1)))
         )
         :effect (and 
             (when 
@@ -160,7 +170,7 @@
 
 )
 
-(define (problem 3_prisoners)
+(define (problem sam_free)
     (:domain prisoner_dilemma)
     (:objects l0 l1 - loc)
 
@@ -182,6 +192,7 @@
         (at mick l1)
         (at sam l0)
         (at p l0)
+
         (police p)
 
         ; trust between prisoners
@@ -196,12 +207,10 @@
     ;   - Zack and Mick both believe he did not testify
 
     (:goal
-        (free sam)
-        (jail_3_year mick)
-        (jail_3_year zack)
+        ; (free sam)
+        ; (jail_3_year mick)
+        ; (jail_3_year zack)
+        (at p l1)
     )
-
-    
-
 )
 
